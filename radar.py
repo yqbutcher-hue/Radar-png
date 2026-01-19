@@ -207,8 +207,7 @@ def create_radar_chart(sub, row_dict, select_columns, output_folder):
     )
 
     student_name = row_dict['姓名']
-    student_class = row_dict['班级']
-    output_file = os.path.join(output_folder, f"{student_class}_{student_name}.png")
+    output_file = os.path.join(output_folder, f"{student_name}.png")
     pio.write_image(fig, output_file, format="png")
     return f"Saved {sub} {output_file}!"
 
