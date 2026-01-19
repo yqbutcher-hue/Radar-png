@@ -1,0 +1,17 @@
+appscript==1.2.5
+colorama==0.4.6
+docx2pdf==0.1.8
+et-xmlfile==1.1.0
+
+lxml==5.1.0
+numpy==1.26.3
+openpyxl==3.1.2
+packaging==23.2
+pandas==2.1.4
+plotly==5.18.0
+python-dateutil==2.8.2
+pytz==2023.3.post1
+six==1.16.0
+tenacity==8.2.3
+tqdm==4.66.1
+tzdata==2023.4
