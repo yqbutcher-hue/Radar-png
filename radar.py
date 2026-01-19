@@ -3,6 +3,7 @@ import plotly.graph_objs as go
 import plotly.io as pio
 import os
 import time as t
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
 def get_grade_and_folder_path():
@@ -13,7 +14,7 @@ def get_grade_and_folder_path():
             return None
 
         if grade.isdigit() and 1 <= int(grade) <= 6:
-            folder_path = os.path.join(os.path.dirname(__file__), f'Y{grade}_RADAR')
+            folder_path = os.path.join(os.path.dirname(__file__))
             if not os.path.exists(folder_path):
                 print(f'找不到文件目录: {folder_path}')
                 continue
@@ -126,17 +127,17 @@ def check_columns_exist(df, select_columns, sub):
     return True
 
 
-def create_radar_chart(sub, row, select_columns, output_folder):
+def create_radar_chart(sub, row_dict, select_columns, output_folder):
     """
     为每个学生生成雷达图。
     """
+    # row_dict 是 dict 类型
     select_data = select_columns.copy()
     select_data.append(select_data[0])
-    values = row[select_data].tolist()
+    values = [row_dict.get(col, 0) for col in select_data]
     theta = select_data
 
     fig = go.Figure()
-    # 添加雷达图的红色范围
     fig.add_trace(go.Scatterpolar(
         r=values,
         theta=theta,
@@ -147,39 +148,37 @@ def create_radar_chart(sub, row, select_columns, output_folder):
         name='',
     ))
 
-    # 添加圆形标记
-    for i, val in enumerate(values[:-1]):  # 去除起始点
+    for i, val in enumerate(values[:-1]):
         fig.add_trace(go.Scatterpolar(
             r=[val],
             theta=[theta[i]],
-            mode='markers',  # 设置为圆形节点
+            mode='markers',
             marker=dict(
-                size=14,  # 圆形节点的大小
-                color='#FF5722',  # 与trace line的颜色一致
+                size=14,
+                color='#FF5722',
                 opacity=1,
-                line=dict(width=0, color='#FF5722'),  # 圆形节点的边界样式
+                line=dict(width=0, color='#FF5722'),
             ),
             name='',
         ))
 
-    vertical_offset = 8  # 自定义垂直偏移量，根据需要调整
+    vertical_offset = 8
     for i, val in enumerate(values):
-        # 当学科为physical时，跳过不显示分数
         if sub != 'physical' or 'science':
             r = [val - vertical_offset]
             fig.add_trace(go.Scatterpolar(
                 r=r,
                 theta=[theta[i]],
                 mode='text',
-                text=str(round(val * 0.05, 1)),  # 保留整数部分
+                text=str(round(val * 0.05, 1)),
                 textposition='bottom center',
                 textfont=dict(family='PingFang SC', size=24, color='#FF5722'),
                 name='',
             ))
 
     fig.update_polars(
-        gridshape='circular',  #
-        bgcolor='rgba(0,0,0,0)',  # 设置为透明背景
+        gridshape='circular',
+        bgcolor='rgba(0,0,0,0)',
         radialaxis=dict(visible=True,
                         showgrid=True,
                         showticklabels=False,
@@ -187,31 +186,31 @@ def create_radar_chart(sub, row, select_columns, output_folder):
                         gridcolor='rgba(128, 128, 128, 0.2)',
                         linewidth=0,
                         range=[0, 100],
-                        tickvals=[25, 50, 75, 100],  # 设置刻度值
-                        nticks=4,  # 设置刻度线数量
+                        tickvals=[25, 50, 75, 100],
+                        nticks=4,
                         ),
-        angularaxis=dict(showgrid=True,  # 角度轴网格线
+        angularaxis=dict(showgrid=True,
                          linecolor='rgba(128, 128, 128, 0.2)',
                          linewidth=2,
                          gridwidth=2,
                          gridcolor='rgba(128, 128, 128, 0.4)',
-                         direction="clockwise",  # 设置方向为顺时针，使底边水平
+                         direction="clockwise",
                          tickfont=dict(family='PingFang SC', size=50, color='#393939'),
                          ),
     )
 
     fig.update_layout(
-        showlegend=False,  # 不显示图例
-        paper_bgcolor='rgba(0,0,0,0)',  # 整个图表的纸张背景设置为透明
+        showlegend=False,
+        paper_bgcolor='rgba(0,0,0,0)',
         height=900,
         width=1300,
     )
 
-    # 保存雷达图为.png文件
-    student_name = row['学生姓名']
-    output_file = os.path.join(output_folder, f"{student_name}.png")
+    student_name = row_dict['姓名']
+    student_class = row_dict['班级']
+    output_file = os.path.join(output_folder, f"{student_class}_{student_name}.png")
     pio.write_image(fig, output_file, format="png")
-    print(f"Saved {sub} {output_file}!")
+    return f"Saved {sub} {output_file}!"
 
 
 def main():
@@ -220,11 +219,10 @@ def main():
 
     if result is None:
         print("用户选择退出程序。")
-        return  # 直接退出 main 函数
+        return
 
     grade, folder_path = result
-    xlsx_file = os.path.join(folder_path, f'Y{grade}_report.xlsx')
-    # xlsx_file = os.path.join(folder_path, f'Y{grade}_report_english.xlsx')
+    xlsx_file = os.path.join(folder_path, f'Y{grade}.xlsx')
     if not os.path.exists(xlsx_file):
         print(f"找不到文件: {xlsx_file}")
         return
@@ -233,17 +231,28 @@ def main():
     selected_subjects = get_subject_choice(radar_dict)
     selected_students = get_student_choice(df)
 
-    # 创建文件夹以保存雷达图
+    max_workers = min(8, os.cpu_count() or 4)  # 可根据实际情况调整
+
     for sub in selected_subjects:
         output_folder = os.path.join(folder_path, sub)
         os.makedirs(output_folder, exist_ok=True)
         select_columns = select_columns_for_subject(sub, grade, radar_dict)
 
         if not check_columns_exist(df, select_columns, sub):
-            continue  # 如果列不存在，则跳过当前学科
+            continue
 
-        for _, row in selected_students.iterrows():
-            create_radar_chart(sub, row, select_columns, output_folder)
+        # 多进程批量生成雷达图
+        tasks = []
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+            for _, row in selected_students.iterrows():
+                row_dict = row.to_dict()
+                tasks.append(executor.submit(create_radar_chart, sub, row_dict, select_columns, output_folder))
+            for future in as_completed(tasks):
+                try:
+                    result = future.result()
+                    print(result)
+                except Exception as e:
+                    print(f"生成图片时出错: {e}")
 
 
 if __name__ == '__main__':
