@@ -39,8 +39,8 @@ def get_radar_dict():
             # 'math_columns_2': ['Comprehension', 'Calculation', 'Application', 'Problem-Solving', 'Bilingualism'],
             'english_columns': ['Speaking', 'Reading', 'Writing', 'Use of English', 'Listening'],
             'physical_columns_1': ['BMI', '肺活量', '50米跑', '坐位体前屈', '1分钟跳绳'],
-            'physical_columns_2': ['BMI', '肺活量', '50米跑', '坐位体前屈', '1分钟跳绳', '仰卧卷腹'],
-            'physical_columns_3': ['BMI', '肺活量', '50米跑', '坐位体前屈', '1分钟跳绳', '仰卧卷腹', '50*8往返跑'],
+            'physical_columns_2': ['BMI', '肺活量', '50米跑', '坐位体前屈', '1分钟跳绳', '仰卧起坐'],
+            'physical_columns_3': ['BMI', '肺活量', '50米跑', '坐位体前屈', '1分钟跳绳', '仰卧起坐', '50米*8'],
             'science_columns_1': ['观察实验能力', '科学思维能力', '动手实践能力', '科学表达能力', '词汇应用能力'],
             }
 
@@ -65,7 +65,6 @@ def get_subject_choice(radar_dict):
             print("输入无效，请重新输入。")
         t.sleep(.5)
 
-
 def get_student_choice(df):
     """
     提示用户输入学生姓名或选择生成全部学生的雷达图。
@@ -77,8 +76,8 @@ def get_student_choice(df):
 
         if choice == 'a':
             return df  # 返回全部学生的DataFrame
-        elif choice in df['学生姓名'].values:
-            return df[df['学生姓名'] == choice]  # 返回指定学生的DataFrame
+        elif choice in df['姓名'].values:
+            return df[df['姓名'] == choice]  # 返回指定学生的DataFrame
         else:
             print(f"没有找到'{choice}'同学，请重新输入。")
         t.sleep(.5)
