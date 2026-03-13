@@ -31,7 +31,7 @@
 
 2. 在创建好的单元格内，插入若干小的单元格，并根据需求进行拆分、合并或插入。
 
-<img src="https://cdn.jsdelivr.net/gh/PaulRua/Images/ThinkPadX1/202401171444200.png" alt="202401171444200" style="zoom:33%;" />
+![image-20260313103428494](https://cdn.jsdelivr.net/gh/PaulRua/Images/macbookpro/image-20260313103428494.png)
 
 3. 接下来就要对表格属性进行优化。打开表格属性窗口，设置参数如下：
 
@@ -84,7 +84,23 @@
 
 # 制作雷达图
 
-## 创建 `report.xlsx`
+## 创建 xlsx 表
+
+```python
+def main():
+    radar_dict = get_radar_dict()
+    result = get_grade_and_folder_path()
+
+    if result is None:
+        print("用户选择退出程序。")
+        return
+
+    grade, folder_path = result
+    xlsx_file = os.path.join(folder_path, f'Y{grade}.xlsx') # 表名称如Y1.xlsx等
+    if not os.path.exists(xlsx_file):
+        print(f"找不到文件: {xlsx_file}")
+        return
+```
 
 报告单中语文、数学、英语、体育学科包含了学生的雷达图，那么如何将雷达图生成并批量插入到word文档里呢？我在这里提供了一种解决方案。
 
@@ -98,18 +114,7 @@
 
 然后，将report.xlsx放到对应的年级目录，下面是各年级目录样式：
 
-1. `\..\报告单项目文件\Y1_RADAR\report.xlsx`
-2. `\..\报告单项目文件\Y2_RADAR\report.xlsx`
-
-3. `\..\报告单项目文件\Y3_RADAR\report.xlsx`
-
-4. `\..\报告单项目文件\Y4_RADAR\report.xlsx`
-
-5. `\..\报告单项目文件\Y5_RADAR\report.xlsx`
-
-6. `\..\报告单项目文件\Y6_RADAR\report.xlsx`
-
-
+`\..\Radar-png\Y1.xlsx`
 
 ## 运行 `radar.py`
 
@@ -132,7 +137,7 @@
 
 首先确保你有Python3，然后拷贝这个项目到本地。
 
-进入`Academic-Report`项目目录
+进入`Radar-png`项目目录
 
 ```
 cd .\你存放的项目路径\Academic-Report
@@ -216,8 +221,6 @@ python radar.py
 
 Word拆分的功能我花了很大力气研究，曾尝试用VBA、Python程序实现，也试过使用`Kutools for word插件`。如果你对此感兴趣可以深入了解。不过我最终还是选择使用**WPS超级会员专享功能——文档拆分**功能按照页面数量进行了拆分和整理。
 
-
-
 # 文件重命名
 
 文件重命名也是比较重要的，因为拆分后的word文档不是按照学生班级姓名命名的，如果一个一个的去改很麻烦。所以我也编写了一段python脚本自动化完成这件事情。
@@ -253,14 +256,5 @@ python rename.py
 
 
 
-# Word to PDF
-
-将 `.docx` 格式批量转换为 `pdf` 格式的方法有很多。在本项目中，我通过调用 `docx2pdf` 第三方模块来实现，具体方法和上面的相同，这里不再赘述。
-
-在虚拟环境下执行：    
-
-```python
-python word2pdf.py
-```
-
-***PaulRua***
+Paul
+最后更新时间：2026-3-13
